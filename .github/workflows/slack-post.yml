@@ -1,0 +1,20 @@
+name: Slack Scheduled Post
+
+on:
+  schedule:
+    - cron: "0 19 * * *"  # 30日に1回
+  workflow_dispatch:         # 手動実行も可能
+
+jobs:
+  post_to_slack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send message to Slack
+        run: |
+          curl -X POST "https://slack.com/api/chat.postMessage" \
+          -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          --data "{
+            \"channel\": \"${{ secrets.SLACK_CHANNEL_ID }}\",
+            \"text\": \"これはテストです。\"
+          }"
