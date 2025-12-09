@@ -2,7 +2,7 @@ name: Slack Scheduled Post
 
 on:
   schedule:
-    - cron: "0 20 * * *"  # 30日に1回
+    - cron: "0 21 * * *"  # 30日に1回
   workflow_dispatch:         # 手動実行も可能
 
 jobs:
@@ -16,5 +16,5 @@ jobs:
           -H "Content-Type: application/json" \
           --data "{
             \"channel\": \"${{ secrets.SLACK_CHANNEL_ID }}\",
-            \"text\": \"これはテストです。\"
+            \"text\": \"if posted at 6:00JTC, Success \"
           }"
