@@ -2,7 +2,7 @@ name: Slack Scheduled Post
 
 on:
   schedule:
-    - cron: "0 19 * * *"  # 30日に1回
+    - cron: "0 20 * * *"  # 30日に1回
   workflow_dispatch:         # 手動実行も可能
 
 jobs:
