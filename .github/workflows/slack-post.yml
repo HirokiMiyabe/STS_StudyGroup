@@ -2,19 +2,72 @@ name: Slack Scheduled Post
 
 on:
   schedule:
-    - cron: "0 21 * * *"  # 30日に1回
-  workflow_dispatch:         # 手動実行も可能
+    - cron: "0 0 * * *"    # 毎日 0:00 (UTC) に実行 → JST 9:00
+  workflow_dispatch:        # 手動実行も残す
 
 jobs:
   post_to_slack:
     runs-on: ubuntu-latest
     steps:
-      - name: Send message to Slack
+      - name: Maybe send message to Slack every 80 days
         run: |
+          # 🔸 ここを「カウント開始日にしたい日」に書き換えてください
+          # 例: この日を「0日目」として、80, 160, 240...日目に投稿されます
+          START_DATE="2025-12-09"
+
+          TODAY=$(date -u +"%Y-%m-%d")
+
+          # 日数差を計算（Ubuntu の GNU date 前提）
+          days_since=$(( ( $(date -d "$TODAY" +%s) - $(date -d "$START_DATE" +%s) ) / 86400 ))
+
+          echo "Days since START_DATE ($START_DATE): $days_since"
+
+          # 未来日を START_DATE にしてしまった場合の保険
+          if [ "$days_since" -lt 0 ]; then
+            echo "START_DATE is in the future. Skipping."
+            exit 0
+          fi
+
+          # 80日ごとのタイミング以外は何もしないで終了
+          if [ $(( days_since % 80 )) -ne 0 ]; then
+            echo "Not the 2th-day interval. Skipping send."
+            exit 0
+          fi
+
+          # ここから実際に送るメッセージを組み立てる
+          TEXT=$(cat <<'EOT'
+!これはテストです!
+80日での自動投稿です。
+-------------
+ご参加いただきありがとうございます！
+日程調整や次回の日付、扱う文献等は「#0-重要連絡-日程調整 」で確認してください。
+自己紹介は、なるべく「#1-自己紹介 」へお願いします。
+
+Googleドライブ（共有フォルダ）
+共有は Google フォームに記入されたアドレスに手動で付与しています。万一アクセス権がない場合は「アクセス権を要求」を押してください。asapに対応します。
+URL: https://drive.google.com/drive/folders/18IyfnVQFcYf11FQJOvuOHWMVHm8_J618?usp=sharing
+自身のサブアドレスの追加は自由にOK
+
+Zoom
+https://u-tokyo-ac-jp.zoom.us/j/82926033122?pwd=ZUAtmUcFcia8amsyH7eRb1BqYKaVyZ.1
+
+公開招待ドキュメント
+https://docs.google.com/document/d/1GqdoURxTjRty5qnrHfjv2wVUZ-8HH3fBY0NTVhc1Osk/edit?usp=sharing
+（招待文がこのチャンネルのcanvasにあります、ご自由にお使いください。）
+
+90日以前の自己紹介内容
+こちら または フォームの回答
+
+質問は #1-実施方式の相談や提案 へ投稿してください。
+このチャンネルは掲示板扱いのため投稿は一旦禁止です。
+EOT
+)
+
+          # jq で JSON を安全に組み立て（改行もいい感じにエスケープされる）
+          jq -n --arg channel "${{ secrets.SLACK_CHANNEL_ID }}" --arg text "$TEXT" \
+            '{channel: $channel, text: $text}' > payload.json
+
           curl -X POST "https://slack.com/api/chat.postMessage" \
-          -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
-          -H "Content-Type: application/json" \
-          --data "{
-            \"channel\": \"${{ secrets.SLACK_CHANNEL_ID }}\",
-            \"text\": \"if posted at 6:00JTC, Success \"
-          }"
+            -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            --data @payload.json
