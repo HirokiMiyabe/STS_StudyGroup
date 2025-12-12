@@ -13,7 +13,7 @@ jobs:
         run: |
           # 🔸 ここを「カウント開始日にしたい日」に書き換えてください
           # 例: この日を「0日目」として、80, 160, 240...日目に投稿されます
-          START_DATE="2025-12-09"
+          START_DATE="2025-12-10"
 
           TODAY=$(date -u +"%Y-%m-%d")
 
@@ -29,14 +29,16 @@ jobs:
           fi
 
           # 80日ごとのタイミング以外は何もしないで終了
-          if [ $(( days_since % 80 )) -ne 0 ]; then
+          if [ $(( days_since % 2 )) -ne 0 ]; then
             echo "Not the 2th-day interval. Skipping send."
             exit 0
           fi
 
           # ここから実際に送るメッセージを組み立てる
           TEXT=$(cat <<'EOT'
-!これはテストです!
+if poseted on 2025/12/14, success
+これはテストです
+これはテストです
 80日での自動投稿です。
 -------------
 ご参加いただきありがとうございます！
