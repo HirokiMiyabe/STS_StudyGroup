@@ -19,7 +19,6 @@ jobs:
 
           # 日数差（UTC基準）
           days_since=$(( ( $(date -d "$TODAY" +%s) - $(date -d "$START_DATE" +%s) ) / 86400 ))
-
           echo "Days since START_DATE ($START_DATE): $days_since"
 
           if [ "$days_since" -lt 0 ]; then
@@ -59,11 +58,14 @@ https://docs.google.com/document/d/1GqdoURxTjRty5qnrHfjv2wVUZ-8HH3fBY0NTVhc1Osk/
 質問は #1-実施方式の相談や提案 へ投稿してください。
 このチャンネルは掲示板扱いのため投稿は一旦禁止です。
 EOT
-          )
+)
 
-          # payload を安全に作る（runner には jq が入っています）
           jq -n --arg channel "${{ secrets.SLACK_CHANNEL_ID }}" --arg text "$TEXT" \
             '{channel: $channel, text: $text}' > payload.json
+
+          echo "=== payload preview ==="
+          cat payload.json
+          echo "======================="
 
           curl -sS -X POST "https://slack.com/api/chat.postMessage" \
             -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
